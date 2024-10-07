@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-rankingURLS = [
+ranking_urls = [
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=472",
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=473",
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=474",
@@ -15,29 +15,34 @@ rankingURLS = [
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=476"
 ]
 
-playerSearchURL = "https://bwf.tournamentsoftware.com/find/player"
+player_search_url = "https://bwf.tournamentsoftware.com/find/player"
 
-driver = Chrome()
-headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36'}
+# Given a players name, finds the url for that players profile
+def get_player_profile_url (driver, player_name):
 
-driver.get(playerSearchURL)
-driver.find_element(By.ID, "Query").send_keys("Viktor")
+     # Navigate to the page and place the player's name in the search bar
+     driver.get(player_search_url)
+     driver.find_element(By.ID, "Query").send_keys(player_name)
 
-try:
-     elem = WebDriverWait(driver, 10).until(
-          EC.presence_of_element_located((By.CSS_SELECTOR, "ul#searchResultArea > li")) or EC.presence_of_element_located((By.CSS_SELECTOR, "ul#searchResultArea > ul > li"))
-     )
-except:
-     print('ERROR')
+     # Wait for results to load, there should be exactly one result
+     try:
+          WebDriverWait(driver, 10).until(
+               EC.presence_of_element_located((By.CSS_SELECTOR, "ul#searchResultArea > li"))
+          )
+     except:
+          print('ERROR')
 
-page_content = BeautifulSoup(driver.page_source, 'html.parser')
-results = page_content.select("ul#searchResultArea > ul > li")
-if (len(results) == 0):
-     results = page_content.select("ul#searchResultArea > li")
+     # Get the single result corresponding to the player
+     page_content = BeautifulSoup(driver.page_source, 'html.parser')
+     player_container = page_content.select("ul#searchResultArea > li")[0]
 
-for player in results:
-     nameContainer = player.select("a.media__link")[0]
-     print(nameContainer.text)
+     # Gets the link to the player's profile
+     player_link = player_container.select("a.media__link")[0]
+     return player_link["href"]
+
+if __name__ == '__main__':
+     driver = Chrome()
+     get_player_profile_url(driver, "Viktor Axelsen")
 
 # print(results)
 
