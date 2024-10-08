@@ -40,3 +40,11 @@ class Player:
     def __init__(self, name, country):
         self.name = name # name of the player
         self.country = country # country the player plays for
+
+# Represents a badminton player's rank
+class Rank:
+    def __init__(self, playername, rank, points, week):
+        self.playername = playername # player holding the rank
+        self.rank = rank # rank of the player
+        self.points = points # ranking points of the player
+        self.week = week # week of the ranking snapshot
