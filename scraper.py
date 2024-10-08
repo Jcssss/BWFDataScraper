@@ -15,9 +15,10 @@ ranking_urls = [
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=476"
 ]
 
+base_url = "https://bwf.tournamentsoftware.com"
 player_search_url = "https://bwf.tournamentsoftware.com/find/player"
 
-# Given a players name, finds the url for that players profile
+# Given a player's name, finds the url for that players profile
 def get_player_profile_url (driver, player_name):
 
      # Navigate to the page and place the player's name in the search bar
@@ -40,9 +41,41 @@ def get_player_profile_url (driver, player_name):
      player_link = player_container.select("a.media__link")[0]
      return player_link["href"]
 
+# Given a player's profile, gets a list of all the tournaments they've played in
+def get_player_tournaments (driver, profile_url):
+
+     # Navigate to the players tournament page
+     new_url = base_url + profile_url + "/tournaments"
+     
+     tournament_urls = set()
+     for extension in ["2024", "2023", "2022", "2021", "2020", "0"]:
+          driver.get(new_url + "/" + extension)
+
+          # Wait for results to load, there should be exactly one result
+          try:
+               WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "tabcontent"))
+               )
+          except:
+               print('ERROR')
+
+          page_content = BeautifulSoup(driver.page_source, 'html.parser')
+          tournament_list = page_content.select("#tabcontent > div")
+
+          for tournament in tournament_list:
+               tournament_url_container = tournament.select("a.media__link")[0]
+               print(tournament_url_container["href"])
+               tournament_urls.add(tournament_url_container["href"])
+
+     return tournament_urls
+
+def create_tournament(tournament):
+     return []
+
 if __name__ == '__main__':
      driver = Chrome()
-     get_player_profile_url(driver, "Viktor Axelsen")
+     profile_url = get_player_profile_url(driver, "Viktor Axelsen")
+     get_player_tournaments(driver, profile_url)
 
 # print(results)
 
