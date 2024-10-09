@@ -43,7 +43,7 @@ def get_player_profile_url_by_name (driver, player_name):
      return player_link["href"]
 
 # Given a ranking page, gets all players' names
-def get_player_profiles (driver, ranking_url):
+def get_player_profiles (driver, ranking_url, is_doubles=False):
 
      # navigate to the page
      driver.get(ranking_url)
@@ -91,8 +91,13 @@ def get_player_profiles (driver, ranking_url):
 
                # For each player get the relevant data
                for container in player_containers:
-                    player_name = container.select("td:has(span.flag) > a")[0].text
-                    print(player_name)
+
+                    if (is_doubles):
+                         player_name = container.select("td:has(span.flag) > a")[0].text
+                         print(player_name)
+                    else:
+                         player_names = [content.text for content in container.select("td > p:has(span.flag) > a")]
+                         print(player_names)
 
                     player_rank = container.select("td.rank")[0].text
                     print(player_rank)
@@ -156,7 +161,7 @@ if __name__ == '__main__':
 
      # profile_url = get_player_profile_url_by_name(driver, "Viktor Axelsen")
      # get_player_tournaments(driver, profile_url)
-     get_player_profiles(driver, ranking_urls[0])
+     get_player_profiles(driver, ranking_urls[3])
 
 
 # connection = pyodbc.connect('DRIVER={ODBC Driver 18 for SQL Server};Server=Juju\\SQLEXPRESS;Database=TutorialDB;Trusted_connection=yes;TrustServerCertificate=yes;')
