@@ -1,7 +1,7 @@
 import pyodbc
+from datetime import datetime
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
-from selenium import webdriver
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -45,7 +45,10 @@ def get_player_profile_url_by_name (driver, player_name):
 # Given a ranking page, gets all players' names
 def get_player_profiles (driver, ranking_url):
 
+     # navigate to the page
      driver.get(ranking_url)
+
+     # select the dropdown for the snapshot week
      driver.find_element(By.CSS_SELECTOR, "a.chosen-single").click()
 
      # Wait for options to load
@@ -56,43 +59,59 @@ def get_player_profiles (driver, ranking_url):
      except:
           print('ERROR')
 
-     # Get the total number of weeks
+     # Get the total number of snapshot weeks
      weeks = len(driver.find_elements(By.CSS_SELECTOR, ".chosen-results > li"))
 
      # Click the menu again to close it
      driver.find_element(By.CSS_SELECTOR, "a.chosen-single").click()
 
-     # For every week
+     # For every snapshot week
      for week in range (1, weeks):
-          driver.find_element(By.CSS_SELECTOR, "a.chosen-single").click()
 
-          # Wait for options to load
+          # Select the desired snapshot week
+          driver.find_element(By.CSS_SELECTOR, "a.chosen-single").click()
           try:
                WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CLASS_NAME, "chosen-results"))
                )
           except:
                print('ERROR')
+          week_option = driver.find_element(By.CSS_SELECTOR, f".chosen-results > li:nth-child({week})")
+          week = week_option.text
+          date_of_week = datetime.strptime(week.strip(), "%m/%d/%Y")
+          print(date_of_week.strftime("%A %B %d, %Y"))
+          week_option.click()
 
-          driver.find_element(By.CSS_SELECTOR, f".chosen-results > li:nth-child({week})").click()
-
-          driver.find_element(By.CSS_SELECTOR, "a.page_next").click()
+          # Iterate through each page of players
           while (True):
+
+               # Get the players on the page
                page_content = BeautifulSoup(driver.page_source, 'html.parser')
                player_containers = page_content.select("table.ruler > tbody > tr")[2:-1]
+
+               # For each player get the relevant data
                for container in player_containers:
                     player_name = container.select("td:has(span.flag) > a")[0].text
                     print(player_name)
 
-               # Wait for options to load
+                    player_rank = container.select("td.rank")[0].text
+                    print(player_rank)
+
+                    player_points = container.select("td.rankingpoints")[0].text
+                    print(player_points)
+
+               # Look for the next page button
                try:
                     WebDriverWait(driver, 4).until(
                          EC.presence_of_element_located((By.CSS_SELECTOR, "a.page_next"))
                     )
+
+               # If the button doesn't exist, then we are on the last page, move to next week
                except:
                     print("end")
                     break
-
+               
+               # If the button exists, click it and move to the next page
                driver.find_element(By.CSS_SELECTOR, "a.page_next").click()
 
 
@@ -102,6 +121,7 @@ def get_player_tournaments (driver, profile_url):
      # Navigate to the players tournament page
      new_url = base_url + profile_url + "/tournaments"
      
+     # Navigates through each year's tournaments and extracts the tournament names
      tournament_urls = set()
      for extension in ["2024", "2023", "2022", "2021", "2020", "0"]:
           driver.get(new_url + "/" + extension)
@@ -125,21 +145,19 @@ def get_player_tournaments (driver, profile_url):
 
      return tournament_urls
 
-def create_tournament(tournament):
-     return []
-
 if __name__ == '__main__':
 
+     # Install an ad blocker chrome extension
      chrome_options = Options()
      chrome_options.add_extension("./adblock.crx")
-     chrome_options.add_experimental_option("prefs", {"excludeSwitches": ["disable-popup-blocking"]})
+
+     # Create an instance of the driver
      driver = Chrome(options=chrome_options)
 
      # profile_url = get_player_profile_url_by_name(driver, "Viktor Axelsen")
      # get_player_tournaments(driver, profile_url)
      get_player_profiles(driver, ranking_urls[0])
 
-# print(results)
 
 # connection = pyodbc.connect('DRIVER={ODBC Driver 18 for SQL Server};Server=Juju\\SQLEXPRESS;Database=TutorialDB;Trusted_connection=yes;TrustServerCertificate=yes;')
 
