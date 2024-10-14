@@ -20,10 +20,11 @@ class Result:
 
 # Represents a Match in badminton consisting of two or three games
 class Match:
-    def __init__(self, winner, event, round, pone, ptwo):
+    def __init__(self, winner, event, round, date, pone, ptwo):
         self.winner = winner # 1 or 2
         self.event = event # the event, one of MS, XD, WS, MD, WD
         self.round = round # the round of the match, a power of 2 or pool
+        self.date = date # date that the match occured
         self.pone = pone # name of player one
         self.ptwo = ptwo # name of player two
         self.games = [] # games played in the match
@@ -43,8 +44,10 @@ class Player:
 
 # Represents a badminton player's rank
 class Rank:
-    def __init__(self, playername, rank, points, week):
+    def __init__(self, playername, rank, points, week, event, partner=None):
         self.playername = playername # player holding the rank
         self.rank = rank # rank of the player
         self.points = points # ranking points of the player
         self.week = week # week of the ranking snapshot
+        self.event = event # event the rank is held in
+        self.partner = partner # Player object representing the player's partner

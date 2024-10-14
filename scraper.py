@@ -8,6 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
+# urls for the ranking pages for events
 ranking_urls = [
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=472",
      "https://bwf.tournamentsoftware.com/ranking/category.aspx?id=42511&category=473",
@@ -150,6 +151,36 @@ def get_player_tournaments (driver, profile_url):
 
      return tournament_urls
 
+# Given a tournament's page get all data on the tournament
+def get_tournament_data(driver, tournament_url):
+     
+     # navigate to the page
+     driver.get(tournament_url + "/Matches")
+
+     # Get the list of options to select the day
+     date_options = driver.find_elements(By.CSS_SELECTOR, "ul > li:has(a.js-date-selection-tab)")
+
+     # For each day option, select it and view the matches
+     for opt in date_options:
+          opt.find_element(By.CSS_SELECTOR, "a.js-date-selection-tab").click()
+          page_content = BeautifulSoup(driver.page_source, 'html.parser')
+
+          # Wait for that days matches to load
+          try:
+               WebDriverWait(driver, 10).until(
+                    EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.is-loading"))
+               )
+          except:
+               print('ERROR')
+
+          # Get the list of matches for that day
+          match_list = page_content.select("ol.match-group > li.match-group__item > div.match")
+
+          # For each match, aquire the necessary info
+          for match in match_list:
+               round = match.select("ul.match__header-title > li > span")[0]["title"]
+               #print(round)
+
 if __name__ == '__main__':
 
      # Install an ad blocker chrome extension
@@ -161,7 +192,9 @@ if __name__ == '__main__':
 
      # profile_url = get_player_profile_url_by_name(driver, "Viktor Axelsen")
      # get_player_tournaments(driver, profile_url)
-     get_player_profiles(driver, ranking_urls[3])
+     # get_player_profiles(driver, ranking_urls[3])
+
+     get_tournament_data(driver, "https://bwf.tournamentsoftware.com/tournament/47a427ee-90e8-4e6d-9616-2ef784879643")
 
 
 # connection = pyodbc.connect('DRIVER={ODBC Driver 18 for SQL Server};Server=Juju\\SQLEXPRESS;Database=TutorialDB;Trusted_connection=yes;TrustServerCertificate=yes;')
