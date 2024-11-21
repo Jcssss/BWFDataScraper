@@ -1,4 +1,5 @@
 import pyodbc
+import re
 from datetime import datetime
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
@@ -151,6 +152,11 @@ def get_player_tournaments (driver, profile_url):
 
      return tournament_urls
 
+# Given a player name, removes any seeding from the name
+def trim_seed (text):
+     result = re.search(r"^([A-Za-z\s]+\b).*(?:\[[0-9]+\])?", text)
+     return result.group(1)
+
 # Given a tournament's page get all data on the tournament
 def get_tournament_data(driver, tournament_url):
      
@@ -179,7 +185,30 @@ def get_tournament_data(driver, tournament_url):
           # For each match, aquire the necessary info
           for match in match_list:
                round = match.select("ul.match__header-title > li > span")[0]["title"]
-               #print(round)
+               
+               # Get player names for match
+               player_name_containers = match.select(".match__row-title-value-content > a > span")
+
+               # Format the names to remove seeding
+               inner_text = [cont.text for cont in player_name_containers]
+               trimmed = [trim_seed(text) for text in inner_text]
+               
+               teams = [[], []]
+
+               # Match was a doubles match
+               if (len(trimmed) == 4):
+                    teams[0].append(trimmed[0])
+                    teams[0].append(trimmed[1])
+                    teams[1].append(trimmed[2])
+                    teams[1].append(trimmed[3])
+
+               # Match was a singles match
+               else:
+                    teams[0].append(trimmed[0])
+                    teams[1].append(trimmed[1])
+
+               print(teams)
+               # print(round)
 
 if __name__ == '__main__':
 
