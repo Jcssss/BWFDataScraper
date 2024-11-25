@@ -157,6 +157,11 @@ def trim_seed (text):
      result = re.search(r"^([A-Za-z\s]+\b).*(?:\[[0-9]+\])?", text)
      return result.group(1)
 
+# Given a round or event, remove the "Qualification" tag from the text
+def trim_qualification (text):
+     result = re.sub(r"(\s-\s)?Qualification\s?", '', text)
+     return result
+
 # Given a tournament's page get all data on the tournament
 def get_tournament_data(driver, tournament_url):
      
@@ -184,31 +189,44 @@ def get_tournament_data(driver, tournament_url):
 
           # For each match, aquire the necessary info
           for match in match_list:
+               event = match.select("ul.match__header-title > li > a > span")[0].text
                round = match.select("ul.match__header-title > li > span")[0]["title"]
+
+               trimmed_event = trim_qualification(event)
+               trimmed_round = trim_qualification(round)
+
+               qualification = False
+               if (len(trimmed_event) != len(event)):
+                    qualification = True
                
                # Get player names for match
                player_name_containers = match.select(".match__row-title-value-content > a > span")
 
                # Format the names to remove seeding
                inner_text = [cont.text for cont in player_name_containers]
-               trimmed = [trim_seed(text) for text in inner_text]
+               trimmed_names = [trim_seed(text) for text in inner_text]
                
                teams = [[], []]
 
                # Match was a doubles match
-               if (len(trimmed) == 4):
-                    teams[0].append(trimmed[0])
-                    teams[0].append(trimmed[1])
-                    teams[1].append(trimmed[2])
-                    teams[1].append(trimmed[3])
+               if (len(trimmed_names) == 4):
+                    teams[0].append(trimmed_names[0])
+                    teams[0].append(trimmed_names[1])
+                    teams[1].append(trimmed_names[2])
+                    teams[1].append(trimmed_names[3])
 
                # Match was a singles match
                else:
-                    teams[0].append(trimmed[0])
-                    teams[1].append(trimmed[1])
+                    teams[0].append(trimmed_names[0])
+                    teams[1].append(trimmed_names[1])
 
                print(teams)
-               # print(round)
+
+               print(qualification)
+               print(trimmed_round)
+               print(round)
+               print(trimmed_event)
+               print(event)
 
 if __name__ == '__main__':
 
@@ -224,7 +242,6 @@ if __name__ == '__main__':
      # get_player_profiles(driver, ranking_urls[3])
 
      get_tournament_data(driver, "https://bwf.tournamentsoftware.com/tournament/47a427ee-90e8-4e6d-9616-2ef784879643")
-
 
 # connection = pyodbc.connect('DRIVER={ODBC Driver 18 for SQL Server};Server=Juju\\SQLEXPRESS;Database=TutorialDB;Trusted_connection=yes;TrustServerCertificate=yes;')
 
